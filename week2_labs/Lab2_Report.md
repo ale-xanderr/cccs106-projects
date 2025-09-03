@@ -13,15 +13,6 @@
 
 ---
 
-## 1. hello_flet.py
-
-### Objective
-To build a simple program that displays a greeting using the Flet framework.
-
-### Features
-- A window with a button and text label.  
-- When the button is clicked, the label updates to show `"Hello, Flet!"`.  
-
 ### Screenshot
 ## Git Repository Configuration
 
@@ -30,6 +21,7 @@ To build a simple program that displays a greeting using the Flet framework.
 ![Git Log](./lab2_screenshots/Screenshot%202025-09-03%20081512.png)
 ![Git commit history](./lab2_screenshots/Screenshot%202025-09-03%20081813.png)
 
+## GUI Applications
 ![Hello Flet](./lab2_screenshots/Screenshot%202025-09-03%20082334.png)
-
 ![Personal GUI](./lab2_screenshots/Screenshot%202025-09-03%20003840.png)
+![Generated Profile](./lab2_screenshots/Screenshot%202025-09-03%20082619.png)
