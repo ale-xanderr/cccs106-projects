@@ -18,7 +18,7 @@ def main(page: ft.Page):
             theme_switch.label = "Dark Mode"
             theme_switch.icon = ft.Icons.DARK_MODE
         page.update()
-    
+
     theme_switch = ft.ElevatedButton(
         text="Dark Mode",
         icon=ft.Icons.DARK_MODE,
@@ -86,8 +86,6 @@ def main(page: ft.Page):
             expand=True
         )
     )
-
-
     # Load contacts on start
     display_contacts(page, contacts_list_view, db_conn)
 

@@ -15,7 +15,6 @@ def init_db():
     conn.commit()
     return conn
 
-
 def add_contact_db(conn, name, phone, email):
     """Adds a new contact to the database."""
     cursor = conn.cursor()
@@ -24,7 +23,6 @@ def add_contact_db(conn, name, phone, email):
         (name, phone, email)
     )
     conn.commit()
-
 
 def get_all_contacts_db(conn, search=""):
     """Retrieves all contacts from the database."""
@@ -49,7 +47,6 @@ def update_contact_db(conn, contact_id, name, phone, email):
         (name, phone, email, contact_id)
     )
     conn.commit()
-
 
 def delete_contact_db(conn, contact_id):
     """Deletes a contact from the database."""
