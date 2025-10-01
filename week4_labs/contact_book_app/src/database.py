@@ -28,6 +28,7 @@ def add_contact_db(conn, name, phone, email):
 
 def get_all_contacts_db(conn, search=""):
     """Retrieves all contacts from the database."""
+    conn = init_db()
     cursor = conn.cursor()
     if search:
         query = "SELECT id, name, phone, email FROM contacts WHERE name LIKE ? OR phone LIKE ? OR email LIKE ?"

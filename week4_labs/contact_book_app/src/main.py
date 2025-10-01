@@ -7,13 +7,24 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.window_width = 400
     page.window_height = 600
-    page.theme_mode = ft.ThemeMode.LIGHT
     
     def toggle_theme(e):
-        page.theme_mode ft.ThemeMode.Dark if page.theme_mode == ft.ThemeMode.LIGHT else ft.ThemeMode.LIGHT
+        if page.theme_mode == ft.ThemeMode.LIGHT:
+            page.theme_mode = ft.ThemeMode.DARK
+            theme_switch.label = "Light Mode"
+            theme_switch.icon = ft.Icons.LIGHT_MODE
+        else:
+            page.theme_mode = ft.ThemeMode.LIGHT
+            theme_switch.label = "Dark Mode"
+            theme_switch.icon = ft.Icons.DARK_MODE
         page.update()
+    
+    theme_switch = ft.ElevatedButton(
+        text="Dark Mode",
+        icon=ft.Icons.DARK_MODE,
+        on_click=toggle_theme
+    )
 
-    theme_button = ft.ElevatedButton("Theme Mode", on_click=toggle_theme,)
     # Initialize DB
     db_conn = init_db()
 
@@ -35,24 +46,50 @@ def main(page: ft.Page):
 
     # Layout
     page.add(
-        ft.Column(
-            [
-                ft.Text("Enter Contact Details:", size=20, weight=ft.FontWeight.BOLD),
-                name_input,
-                phone_input,
-                email_input,
-                add_button,
-                ft.Divider(),
-                ft.Text("Contacts:", size=20, weight=ft.FontWeight.BOLD),
-                search_input,
-                contacts_list_view,
-            ]
+        ft.Container(
+            content=ft.Column(
+                [
+                    # Header with theme toggle
+                    ft.Row(
+                        [
+                            ft.Text("Contact Book", size=24, weight=ft.FontWeight.BOLD),
+                            theme_switch
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    ),
+                    ft.Divider(),
+
+                    # Add contact section
+                    ft.Text("Add New Contact:", size=18, weight=ft.FontWeight.W_500),
+                    ft.Row([ft.Icon(ft.Icons.PERSON, color=ft.Colors.BLUE), name_input], alignment=ft.MainAxisAlignment.CENTER), 
+                    ft.Row([ft.Icon(ft.Icons.PHONE, color=ft.Colors.BLUE), phone_input], alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Row([ft.Icon(ft.Icons.EMAIL, color=ft.Colors.BLUE), email_input], alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Row([add_button], alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Divider(height=20),
+
+                    # Search / Contact List section 
+                    ft.Text("Your Contacts:", size=18, weight=ft.FontWeight.W_500),
+                    ft.Row([ft.Icon(ft.Icons.SEARCH, color=ft.Colors.BLUE), search_input], alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Container(height=10),
+
+                    ft.Container(
+                        content=contacts_list_view,
+                        expand=True,
+                        border=ft.border.all(1, ft.Colors.GREY_400),
+                        border_radius=8,
+                        padding=10,
+                    ),
+                ],
+                spacing=10,
+            ),
+            padding=20,
+            expand=True
         )
     )
 
+
     # Load contacts on start
     display_contacts(page, contacts_list_view, db_conn)
-
 
 if __name__ == "__main__":
     ft.app(target=main)
