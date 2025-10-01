@@ -26,12 +26,19 @@ def add_contact_db(conn, name, phone, email):
     conn.commit()
 
 
-def get_all_contacts_db(conn):
+def get_all_contacts_db(conn, search=""):
     """Retrieves all contacts from the database."""
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, phone, email FROM contacts")
-    return cursor.fetchall()
+    if search:
+        query = "SELECT id, name, phone, email FROM contacts WHERE name LIKE ? OR phone LIKE ? OR email LIKE ?"
+        wildcard = f"%{search}%"
+        cursor.execute(query,(wildcard, wildcard, wildcard))
+    else:
+        cursor.execute("SELECT id, name, phone, email FROM contacts")
 
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
 def update_contact_db(conn, contact_id, name, phone, email):
     """Updates an existing contact in the database."""

@@ -7,7 +7,13 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.window_width = 400
     page.window_height = 600
+    page.theme_mode = ft.ThemeMode.LIGHT
+    
+    def toggle_theme(e):
+        page.theme_mode ft.ThemeMode.Dark if page.theme_mode == ft.ThemeMode.LIGHT else ft.ThemeMode.LIGHT
+        page.update()
 
+    theme_button = ft.ElevatedButton("Theme Mode", on_click=toggle_theme,)
     # Initialize DB
     db_conn = init_db()
 
@@ -16,6 +22,7 @@ def main(page: ft.Page):
     phone_input = ft.TextField(label="Phone", width=350)
     email_input = ft.TextField(label="Email", width=350)
     inputs = (name_input, phone_input, email_input)
+    search_input = ft.TextField(label="Search", width=350, on_change=lambda e: display_contacts(page, contacts_list_view, db_conn, search_input.value))
 
     # Contact list view
     contacts_list_view = ft.ListView(expand=1, spacing=10, auto_scroll=True)
@@ -37,6 +44,7 @@ def main(page: ft.Page):
                 add_button,
                 ft.Divider(),
                 ft.Text("Contacts:", size=20, weight=ft.FontWeight.BOLD),
+                search_input,
                 contacts_list_view,
             ]
         )
