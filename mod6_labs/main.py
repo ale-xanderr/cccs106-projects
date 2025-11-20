@@ -1,6 +1,7 @@
 import flet as ft
 import json
 import httpx
+import datetime
 from pathlib import Path
 from config import Config
 from weather_service import WeatherService
@@ -17,34 +18,28 @@ class WeatherApp:
         self.weather_service = WeatherService()
         
         # Feature: Search History
-        # We initialize an empty list here. Data persistence is handled via JSON.
         self.search_history = []
         
         # Feature: Metric/Imperial Toggle
-        # Challenge: Auto-refreshing data caused mislabeling. 
-        # Solution: We store 'last_weather_data' as RAW metric data from API, 
-        # and perform conversion only during display logic.
         self.last_weather_data = None 
         self.current_unit = "metric"
+        self.forecast_data = None
 
         self.setup_page()
         self.build_ui()
         
         # Feature: User Location Preload
-        # Challenge: Async timing race conditions.
-        # Solution: We run this as a separate task immediately on startup.
         self.page.run_task(self._auto_fetch_location)
 
     # ------------------ BASIC UI SETUP ------------------ #
     def setup_page(self):
         self.page.title = Config.APP_TITLE
         # Feature: Theme Toggle
-        # Initial state detection can be tricky, so we default to System or Dark.
         self.page.theme_mode = ft.ThemeMode.SYSTEM
         self.page.padding = 20
         self.page.window.width = Config.APP_WIDTH
-        self.page.window.height = Config.APP_HEIGHT
-        self.page.window.resizable = False
+        self.page.window.height = Config.APP_HEIGHT + 100 # Increased height for chart
+        self.page.window.resizable = True # Allow resizing for chart visibility
         self.page.window.center()
 
     def get_theme_color(self):
@@ -53,11 +48,6 @@ class WeatherApp:
 
     # ------------------ FEATURE: SEARCH HISTORY ------------------ #
     def add_to_history(self, city: str):
-        """
-        Stores previously searched locations.
-        Challenge: Managing storage to avoid clutter.
-        Solution: We limit the list to the last 10 items and use a JSON file.
-        """
         city = city.title()
         if city not in self.search_history:
             self.search_history.insert(0, city)
@@ -88,7 +78,7 @@ class WeatherApp:
         try:
             with open("history.json", "w") as f:
                 json.dump(self.search_history, f)
-        except: pass # Graceful fallback if file write fails
+        except: pass
 
     def load_history_from_file(self):
         if Path("history.json").exists():
@@ -100,11 +90,6 @@ class WeatherApp:
 
     # ------------------ FEATURE: THEME TOGGLE ------------------ #
     def toggle_theme(self, e):
-        """
-        Switches between Light and Dark theme.
-        Challenge: Inverted colors on icons/text. 
-        Solution: We rely on Flet's built-in ThemeMode and dynamic color getters.
-        """
         if self.page.theme_mode == ft.ThemeMode.LIGHT:
             self.page.theme_mode = ft.ThemeMode.DARK
             self.theme_button.icon = ft.Icons.LIGHT_MODE
@@ -112,7 +97,6 @@ class WeatherApp:
             self.page.theme_mode = ft.ThemeMode.LIGHT
             self.theme_button.icon = ft.Icons.DARK_MODE
 
-        # Re-render weather with new colors if data exists
         if self.last_weather_data:
             self.display_weather(self.last_weather_data)
         else:
@@ -144,7 +128,6 @@ class WeatherApp:
         )
 
         # Feature: Dynamic Background
-        # Container that will change color based on weather conditions
         self.weather_container = ft.Container(
             visible=False, bgcolor=self.get_theme_color(),
             border_radius=20, padding=20,
@@ -172,15 +155,13 @@ class WeatherApp:
                 self.loading,
                 self.error_message,
                 self.weather_container,
-            ], scroll=ft.ScrollMode.HIDDEN)
+            ], scroll=ft.ScrollMode.AUTO, expand=True)
         )
         
-        # Load history on startup
         self.load_history_from_file()
 
     # ------------------ FEATURE: METRIC/IMPERIAL TOGGLE ------------------ #
     def convert_temp(self, temp: float, from_unit: str = "metric") -> float:
-        """Calculates conversion between C and F."""
         if from_unit == self.current_unit: return temp 
         if from_unit == "metric" and self.current_unit == "imperial":
             return (temp * 9/5) + 32
@@ -189,25 +170,15 @@ class WeatherApp:
         return temp 
 
     def toggle_units(self, e):
-        """
-        Switches system.
-        Solution: Does NOT modify the stored data, only the display calculation.
-        """
         self.current_unit = "imperial" if self.current_unit == "metric" else "metric"
         if self.last_weather_data:
              self.display_weather(self.last_weather_data)
 
     # ------------------ FEATURE: USER LOCATION ------------------ #
     async def _auto_fetch_location(self):
-        # Preload location on startup
         await self.get_location_weather(auto_fetch=True)
 
     async def get_location_weather(self, auto_fetch: bool = False):
-        """
-        Feature: Location Detection.
-        Challenge: Handling permissions/errors gracefully.
-        Solution: Shows 'Locating...' state if manual click, silent fail if auto-load.
-        """
         if not auto_fetch:
             self.error_message.value = "Locating..."
             self.error_message.visible = True
@@ -256,13 +227,11 @@ class WeatherApp:
         self.last_weather_data = data 
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         
-        # 1. Extract Raw Metric Data
         raw_temp = data.get("main", {}).get("temp", 0)
         raw_feels = data.get("main", {}).get("feels_like", 0)
         raw_min = data.get("main", {}).get("temp_min", 0)
         raw_max = data.get("main", {}).get("temp_max", 0)
         
-        # 2. Convert to Current Unit (Metric/Imperial)
         temp = self.convert_temp(raw_temp)
         feels_like = self.convert_temp(raw_feels)
         temp_min = self.convert_temp(raw_min)
@@ -274,9 +243,6 @@ class WeatherApp:
         icon_code = data.get("weather", [{}])[0].get("icon", "01d")
         
         text_color = ft.Colors.WHITE if is_dark else ft.Colors.BLACK
-        
-        # Feature: Dynamic Background Color
-        # Calculates color based on description and day/night status
         container_color = self.get_background_for_weather(description, icon_code, is_dark)
         
         unit_symbol = '°C' if self.current_unit == 'metric' else '°F'
@@ -308,6 +274,11 @@ class WeatherApp:
             ], alignment="center", spacing=10),
             
             ft.Divider(color=text_color),
+            
+            # NEW: Hourly Trend Chart
+            self.build_hourly_chart(is_dark, text_color, unit_symbol),
+            
+            ft.Divider(color=text_color),
             self.build_forecast_view(is_dark, text_color, unit_symbol)
         ], horizontal_alignment="center")
         
@@ -315,15 +286,117 @@ class WeatherApp:
         self.weather_container.visible = True
         self.page.update()
 
+    # ------------------ FEATURE: CHARTS & GRAPHS (NEW) ------------------ #
+    def build_hourly_chart(self, is_dark, text_color, unit_symbol):
+        """
+        Creates a LineChart showing the temperature trend for the next 24 hours (8 intervals).
+        Includes interactive tooltips and transparent styling.
+        """
+        if not self.forecast_data: return ft.Container()
+
+        # 1. Extract next 8 intervals (approx 24 hours)
+        # OpenWeatherMap free API gives 3-hour intervals
+        hourly_data = self.forecast_data['list'][:8]
+        
+        data_points = []
+        x_labels = []
+        
+        min_temp = 1000
+        max_temp = -1000
+
+        for i, item in enumerate(hourly_data):
+            # Process Time
+            dt_txt = item['dt_txt']
+            dt_obj = datetime.datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
+            time_label = dt_obj.strftime("%H:%M") # e.g., 15:00
+            
+            # Process Temp
+            raw_val = item['main']['temp']
+            val = self.convert_temp(raw_val)
+            
+            if val < min_temp: min_temp = val
+            if val > max_temp: max_temp = val
+            
+            # Create Data Point with Tooltip
+            data_points.append(
+                ft.LineChartDataPoint(
+                    i, val,
+                    tooltip=f"{time_label}\n{val:.1f}{unit_symbol}",
+                    point=True
+                )
+            )
+            
+            # Create X-Axis Label (only show every 2nd label to avoid clutter)
+            if i % 2 == 0:
+                x_labels.append(
+                    ft.ChartAxisLabel(
+                        value=i,
+                        label=ft.Text(time_label, size=10, weight=ft.FontWeight.BOLD, color=text_color)
+                    )
+                )
+
+        # 2. Define Chart Styling
+        chart_color = ft.Colors.ORANGE_ACCENT if is_dark else ft.Colors.BLUE_ACCENT
+        grid_color = ft.Colors.with_opacity(0.2, text_color)
+        
+        # Add padding to Y axis so the line doesn't touch the top/bottom
+        min_y = min_temp - 2
+        max_y = max_temp + 2
+        
+        # 3. Construct the LineChart
+        chart = ft.LineChart(
+            data_series=[
+                ft.LineChartData(
+                    data_points=data_points,
+                    stroke_width=3,
+                    color=chart_color,
+                    curved=True,
+                    stroke_cap_round=True,
+                    below_line_bgcolor=ft.Colors.with_opacity(0.1, chart_color),
+                )
+            ],
+            border=ft.border.all(0, ft.Colors.TRANSPARENT),
+            horizontal_grid_lines=ft.ChartGridLines(interval=5, color=grid_color, width=1),
+            vertical_grid_lines=ft.ChartGridLines(interval=1, color=grid_color, width=1),
+            left_axis=ft.ChartAxis(
+                labels_size=40,
+                title=ft.Text(f"Temp ({unit_symbol})", size=10, color=text_color),
+                title_size=20,
+                show_labels=True,
+                labels_interval=5 # Adjust based on your temp range preference
+            ),
+            bottom_axis=ft.ChartAxis(
+                labels=x_labels,
+                labels_size=20,
+            ),
+            tooltip_bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
+            min_y=min_y,
+            max_y=max_y,
+            expand=True,
+        )
+
+        return ft.Container(
+            content=ft.Column([
+                ft.Text("24-Hour Temperature Trend", size=14, weight=ft.FontWeight.BOLD, color=text_color),
+                ft.Container(
+                    content=chart,
+                    height=200, # Fixed height for the chart
+                    padding=ft.padding.only(right=20, left=10)
+                )
+            ]),
+            padding=ft.padding.symmetric(vertical=10)
+        )
+
+    # ------------------ EXISTING FORECAST VIEW ------------------ #
     def build_forecast_view(self, is_dark, text_color, unit_symbol):
         if not self.forecast_data: return ft.Container()
         
         cards = []
+        # Filter for roughly "noon" forecasts for the daily summary
         daily_list = [x for x in self.forecast_data['list'] if '12:00:00' in x['dt_txt']][:5]
         
         for item in daily_list:
             date_txt = item['dt_txt'].split(" ")[0]
-            import datetime
             day_name = datetime.datetime.strptime(date_txt, "%Y-%m-%d").strftime("%a")
             
             f_temp = self.convert_temp(item['main']['temp'])
@@ -357,11 +430,6 @@ class WeatherApp:
         )
 
     def get_background_for_weather(self, description: str, icon_code: str, is_dark: bool) -> str:
-        """
-        Feature: Dynamic Background
-        Logic: Maps text descriptions and icon codes (day/night) to specific color palettes.
-        Challenges: Edge cases like 'partly cloudy' vs 'sunny'.
-        """
         desc = description.lower()
         is_night = icon_code.endswith("n")
         
