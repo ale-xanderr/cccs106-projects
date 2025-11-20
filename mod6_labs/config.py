@@ -12,7 +12,7 @@ class Config:
     BASE_URL = "https://api.openweathermap.org/data/2.5"
     
     # App Settings
-    APP_TITLE = "Weather Pro"
+    APP_TITLE = "Weather Weather Lang"
     APP_WIDTH = 400
     APP_HEIGHT = 800
     
