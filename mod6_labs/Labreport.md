@@ -1,82 +1,69 @@
-Flet Weather Application - Module 6 
+# 🌤️ Flet Weather Application  
+**Module 6 – Python Flet Project**
+
+## 👤 Student Information  
+**Name:** Sean Xander B. Aquino  
+**Course / Section:** BSCS 3A  
+**Subject:** CCCS 106  
 
 ---
-Student Information
+
+A **modern, cross-platform Weather Application** built with **Python + Flet**, featuring real-time weather data, dynamic UI themes, geolocation support, and Material Design components. The app runs seamlessly on **desktop, mobile, and web** using a single codebase.
+
 ---
-A modern, cross-platform weather application built with Python and Flet. This app provides real-time weather data, dynamic environmental visualizations, and a responsive Material Design interface.
 
-(Dynamic background changing based on "Clear Night" condition)
+## ✨ Features
 
-Features
+### 🌡️ Real-Time Weather  
+- Fetches up-to-date **temperature**, **humidity**, **wind speed**, and conditions using the **OpenWeatherMap API**.
 
-Real-time Weather: Fetches current temperature, humidity, and wind speed via OpenWeatherMap API.
+### 🎨 Dynamic Backgrounds  
+- UI colors and gradients adapt to current weather:
+  - **Indigo** → Clear night  
+  - **Grey** → Cloudy  
+  - **Orange** → Sunrise / Sunset  
+  - **Blue** → Clear daytime  
 
-Dynamic Backgrounds: The app interface changes color and gradient based on the weather conditions (e.g., Indigo for clear nights, Grey for cloudy, Orange for sunset).
+### 📍 Geolocation  
+- Automatically detects device location at startup for instant local weather display.
 
-Geolocation: Automatically detects your location on startup to show local weather instantly.
+### 🔍 City Search  
+- Search any city worldwide with validation and clear error handling.
 
-City Search: Search for any city globally with error handling for invalid names.
+### 🔄 Unit Conversion  
+- Toggle between **Metric (°C)** and **Imperial (°F)** units.
 
-Unit Conversion: Toggle between Metric (°C) and Imperial (°F) units.
+### 🌙 Theme Support  
+- Full **Dark/Light Mode** with automatic system theme detection.
 
-Dark/Light Mode: Fully supported theme toggling with system preference detection.
+### 🕗 Search History  
+- Stores your **last 5 searched locations** using Flet’s `client_storage`.
 
-Search History: Saves your last 5 searched locations for quick access.
+---
 
-Tech Stack
+## 🧰 Tech Stack
 
-Language: Python 3.x
+| Component | Technology |
+|----------|------------|
+| Language | Python 3.x |
+| Framework | Flet (Flutter for Python) |
+| API | OpenWeatherMap |
+| UI Assets | Material Icons |
 
-Framework: Flet (Flutter for Python)
+---
 
-API: OpenWeatherMap
+## 📸 Screenshots
 
-Assets: Material Icons
+Below are screenshots of the Flet Weather Application (stored in the `ss/` folder).
 
-Installation
+![Home Screen](ss//1.png)
+*Home screen showing current weather and search.*
 
-Clone the repository
+![Search Results](ss//2.png)
+*Search results and details view and switching to other measurement (farenheit)*
 
-git clone [https://github.com/yourusername/weather-app-flet.git](https://github.com/yourusername/weather-app-flet.git)
-cd weather-app-flet
+![Settings / Theme](ss//3.png)
+*Trend and unit settings.*
 
-
-Create a virtual environment (Optional but recommended)
-
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-
-
-Install dependencies
-
-pip install flet requests
-
-
-Set up API Key
-
-Get a free API key from OpenWeatherMap.
-
-Open main.py (or your config file) and replace the placeholder with your key:
-
-API_KEY = "YOUR_OPENWEATHER_API_KEY"
-
-
-Usage
-
-Run the application as a desktop app:
-
-flet run main.py
-
-
-To run it as a web app in your browser:
-
-flet run main.py --web
-
-
-Key Implementation Details
-
-State Management: Uses client_storage to persist user preferences (Theme, Search History) across sessions.
-
-Async Handling: Geolocation and API requests are handled asynchronously to prevent UI freezing.
-
-UI Design: Utilizes "Glassmorphism" effects (semi-transparent containers) to ensure text remains readable against the dynamic, high-contrast weather backgrounds.
+![dark](ss//6.png)
+*Dark Theme*
